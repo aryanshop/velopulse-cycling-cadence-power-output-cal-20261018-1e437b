@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VeloPulse: Cycling Cadence & Power Output Calculator</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="app-header">
+        <div class="logo">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="5.5" cy="17.5" r="3.5"/><circle cx="18.5" cy="17.5" r="3.5"/><path d="M15 6.5H19L21 11.5"/><path d="M12 17.5V11.5L9 9.5L5.5 14.5"/><path d="M9 9.5L12 6.5L15 11.5"/></svg>
+            <h1>VeloPulse</h1>
+        </div>
+        <p class="tagline">Precision Drivetrain & Biomechanical Simulator</p>
+    </header>
+
+    <main class="dashboard-grid">
+        <!-- Left Column: Inputs -->
+        <section class="panel input-panel">
+            <h2>Configuration</h2>
+            
+            <div class="tab-bar">
+                <button class="tab-btn active" data-tab="drivetrain">Drivetrain</button>
+                <button class="tab-btn" data-tab="rider">Rider & Env</button>
+            </div>
+
+            <!-- Drivetrain Tab -->
+            <div class="tab-content active" id="drivetrain-tab">
+                <div class="input-group">
+                    <label for="wheelSize">Wheel Size & Tire</label>
+                    <select id="wheelSize">
+                        <option value="2.096" selected>700c x 25mm (2096 mm)</option>
+                        <option value="2.136">700c x 28mm (2136 mm)</option>
+                        <option value="2.170">700c x 32mm (2170 mm)</option>
+                        <option value="2.288">27.5" / 650b x 2.1" (2288 mm)</option>
+                        <option value="2.326">29" x 2.1" (2326 mm)</option>
+                        <option value="1.490">20" BMX (1490 mm)</option>
+                    </select>
+                </div>
+
+                <div class="input-row">
+                    <div class="input-group">
+                        <label for="chainring">Chainring Teeth</label>
+                        <input type="number" id="chainring" value="50" min="20" max="70">
+                    </div>
+                    <div class="input-group">
+                        <label for="cog">Rear Cog Teeth</label>
+                        <input type="number" id="cog" value="17" min="9" max="42">
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label for="cadence">Pedaling Cadence (<span id="cadenceVal">90</span> RPM)</label>
+                    <input type="range" id="cadence" value="90" min="40" max="130" step="1">
+                </div>
+
+                <div class="input-group">
+                    <label for="crankLength">Crankarm Length</label>
+                    <select id="crankLength">
+                        <option value="165">165 mm</option>
+                        <option value="170" selected>170 mm</option>
+                        <option value="172.5">172.5 mm</option>
+                        <option value="175">175 mm</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Rider & Env Tab -->
+            <div class="tab-content" id="rider-tab">
+                <div class="input-row">
+                    <div class="input-group">
+                        <label for="riderWeight">Rider Mass (kg)</label>
+                        <input type="number" id="riderWeight" value="75" min="35" max="150">
+                    </div>
+                    <div class="input-group">
+                        <label for="bikeWeight">Bike Mass (kg)</label>
+                        <input type="number" id="bikeWeight" value="9" min="5" max="25">
+                    </div>
+                </div>
+
+                <div class="input-row">
+                    <div class="input-group">
+                        <label for="gradient">Gradient (%)</label>
+                        <input type="number" id="gradient" value="0" min="-20" max="30" step="0.5">
+                    </div>
+                    <div class="input-group">
+                        <label for="headwind">Headwind (km/h)</label>
+                        <input type="number" id="headwind" value="0" min="-30" max="50" step="1">
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label for="riderPos">Riding Position</label>
+                    <select id="riderPos">
+                        <option value="0.32">Tops / Upright (CdA 0.32)</option>
+                        <option value="0.28" selected>Hoods / Standard (CdA 0.28)</option>
+                        <option value="0.22">Drops / Aero (CdA 0.22)</option>
+                        <option value="0.18">Time Trial / Tri Bars (CdA 0.18)</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="preset-buttons">
+                <button class="preset-btn" data-preset="climbing">Climbing Setup</button>
+                <button class="preset-btn" data-preset="sprint">Flat Sprint</button>
+                <button class="preset-btn" data-preset="commute">Urban Commute</button>
+            </div>
+        </section>
+
+        <!-- Center Column: Key Metrics & Chart -->
+        <section class="panel output-panel">
+            <h2>Performance Analytics</h2>
+            
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <span class="metric-label">Speed</span>
+                    <span class="metric-value" id="resSpeed">32.4</span>
+                    <span class="metric-unit">km/h</span>
+                </div>
+                <div class="metric-card">
+                    <span class="metric-label">Gear Ratio</span>
+                    <span class="metric-value" id="resRatio">2.94</span>
+                    <span class="metric-unit">multiplier</span>
+                </div>
+                <div class="metric-card">
+                    <span class="metric-label">Development</span>
+                    <span class="metric-value" id="resDev">6.16</span>
+                    <span class="metric-unit">meters / rev</span>
+                </div>
+                <div class="metric-card highlight">
+                    <span class="metric-label">Power Required</span>
+                    <span class="metric-value" id="resPower">215</span>
+                    <span class="metric-unit">Watts</span>
+                </div>
+            </div>
+
+            <div class="chart-container">
+                <div class="chart-header">
+                    <h3>Power vs. Speed Curve (Cadence Sweep)</h3>
+                    <span class="chart-subtitle">Estimated power output across cadence range at current gradient</span>
+                </div>
+                <canvas id="powerChart" width="600" height="280"></canvas>
+                <div class="chart-legend">
+                    <span class="legend-item"><span class="dot aero"></span> Aerodynamic Drag</span>
+                    <span class="legend-item"><span class="dot rolling"></span> Rolling Resistance</span>
+                    <span class="legend-item"><span class="dot gravity"></span> Gravity / Slope</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Right Column: Cadence Matrix -->
+        <section class="panel matrix-panel">
+            <h2>Cadence Speed Matrix (km/h)</h2>
+            <p class="panel-desc">Current gear speeds at common cadence intervals</p>
+            
+            <div class="table-wrapper">
+                <table id="cadenceTable">
+                    <thead>
+                        <tr>
+                            <th>Cadence</th>
+                            <th>Speed</th>
+                            <th>Power (W)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Populated via JS -->
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="insights-box">
+                <h3>Drivetrain Insights</h3>
+                <p id="insightText">Generating optimal biomechanical analysis...</p>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>VeloPulse &bull; Client-side bicycle mechanics calculator. No data is stored or transmitted.</p>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>
